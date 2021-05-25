@@ -85,3 +85,10 @@ void BoostingModel::loadModel(const std::string &model_path) {
     _trees_ptr->emplace_back(*dt);
     in_file.close();
 }
+
+size_t BoostingModel::getLeafNum() {
+    size_t res = 0;
+    for (const auto &tree : *_trees_ptr)
+        res += tree.numLeaf();
+    return res;
+}

@@ -41,9 +41,9 @@ namespace Eval {
 
 int main() {
     const int NUM_CLASS = 7;
-    const std::string& model_path = "/Users/menglingwu/Documents/2021/coding/personal_projects/boosting_spark/xgboost.trees.parsed";
-    const std::string& data_path = "/Users/menglingwu/Documents/2021/coding/personal_projects/dataset/DryBeanDataset/Dry_Bean_Dataset.txt";
-    const std::string& transformed_feature_path = "/Users/menglingwu/Documents/2021/coding/personal_projects/dataset/DryBeanDataset/transformed_feature.txt";
+    const std::string& model_path = "model_path";
+    const std::string& data_path = "data_path";
+    const std::string& transformed_feature_path = "transformed_feature_path";
 
     // 加载模型
     BoostingModel bm = BoostingModel::Get()->Init(model_path, NUM_CLASS);
@@ -70,16 +70,23 @@ int main() {
         bm.predict(sample.features, &pred, &transformed_features);
         if (sample.label != Eval::findMax(pred)) error_cnt++;
         cnt++;
+        // dump sample
+        const std::string &origin_label = labels_array[sample.label];
+        size_t label_len = origin_label.size();
         size_t num_feature = transformed_features.size();
-        char feature_buffer[num_feature+1];
+        size_t buffer_len = label_len + num_feature + 2;
+        char feature_buffer[buffer_len];
+        for (size_t i = 0; i < label_len; i++)
+            feature_buffer[i] = origin_label[i];
+        feature_buffer[label_len] = '|';
         for (size_t i = 0; i < num_feature; i++) {
-            if (transformed_features[i] == 1) feature_buffer[i] = '1';
-            else feature_buffer[i] = '0';
+            if (transformed_features[i] == 1) feature_buffer[i+label_len+1] = '1';
+            else feature_buffer[i+label_len+1] = '0';
         }
-        feature_buffer[num_feature] = '\n';
-        transformed_feature_file.write(feature_buffer, num_feature+1);
+        feature_buffer[buffer_len] = '\n';
+        transformed_feature_file.write(feature_buffer, buffer_len+1);
     }
-    std::cout << error_cnt << "," << cnt << "," << (float)error_cnt / (float)cnt << std::endl;
+    std::cout << error_cnt << "," << cnt << "," << (float)error_cnt / (float)cnt << "," << bm.getLeafNum() << std::endl;
     eval_file.close();
     transformed_feature_file.close();
     return 0;
