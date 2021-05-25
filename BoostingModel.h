@@ -70,6 +70,7 @@ public:
         return *this;
     }
     void predict(const std::vector<float>& features, std::vector<float>* class_scores, std::vector<int>* transformed_features);
+    size_t getLeafNum();
 private:
     static void parseLine(const char* line, std::vector<char*>& fields);
     void loadModel(const std::string& model_path);
