@@ -6,18 +6,22 @@
 
 
 
-std::pair<int/*class_id*/, float/*score*/> DecisionTreeModel::getClassScore(const std::vector<float> &features) {
-    if (node_mp->empty()) return std::make_pair<int, float>(-1, 0);
+DecisionTreeModel::PredictionInfo DecisionTreeModel::getClassScore(const std::vector<float> &features) {
+    DecisionTreeModel::PredictionInfo predictionInfo;
+    if (node_mp->empty()) return predictionInfo;
     int feature_dim = features.size();
     TreeNode node = (*node_mp)[0];
     while (node.left_node_id >= 0 && node.right_node_id >= 0) {
-        if (node.split_feature_id >= feature_dim) return std::make_pair<int, float>(-1, 0);
+        if (node.split_feature_id >= feature_dim) return predictionInfo;
         if (features[node.split_feature_id] < node.threshold)
             node = (*node_mp)[node.left_node_id];
         else
             node = (*node_mp)[node.right_node_id];
     }
-    return std::make_pair<int, float>(reinterpret_cast<int &&>(class_id), reinterpret_cast<float &&>(node.score));
+    predictionInfo.class_id = class_id;
+    predictionInfo.score = node.score;
+    predictionInfo.leaf_id = (*leaf_mp_ptr)[node.node_id];
+    return predictionInfo;
 }
 
 
@@ -25,9 +29,9 @@ void BoostingModel::predict(const std::vector<float>& features, std::vector<floa
     if (_num_class < class_scores->size()) return;
     for (auto &score: *class_scores) score = 0;
     for (auto &tree : *_trees_ptr) {
-        std::pair<int, float> pred = tree.getClassScore(features);
-        if (pred.first < 0) continue;
-        (*class_scores)[pred.first] += pred.second;
+        const DecisionTreeModel::PredictionInfo &predict_info = tree.getClassScore(features);
+        if (predict_info.class_id < 0) continue;
+        (*class_scores)[predict_info.class_id] += predict_info.score;
     }
 }
 

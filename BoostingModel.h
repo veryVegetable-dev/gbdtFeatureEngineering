@@ -27,12 +27,20 @@ struct TreeNode {
 
 
 class DecisionTreeModel {
+
 public:
+    struct PredictionInfo {
+        PredictionInfo(): class_id(-1), score(-1), leaf_id(-1)  {}
+        int class_id;
+        float score;
+        size_t leaf_id;
+    };
+
     DecisionTreeModel(): class_id(-1) {
         node_mp = std::shared_ptr<std::unordered_map<int, TreeNode> >(new std::unordered_map<int, TreeNode>());
         leaf_mp_ptr = std::shared_ptr<std::unordered_map<size_t , size_t> >(new std::unordered_map<size_t , size_t>());
     }
-    std::pair<int/*class_id*/, float/*score*/> getClassScore(const std::vector<float> &features);
+    DecisionTreeModel::PredictionInfo getClassScore(const std::vector<float> &features);
     void setClassId(int _class_id) {class_id = _class_id; };
     void insertNode(const TreeNode &node) { (*node_mp)[node.node_id] = node; }
     void addLeaf(int node_id) {
