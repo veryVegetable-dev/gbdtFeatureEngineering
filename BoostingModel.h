@@ -30,13 +30,20 @@ class DecisionTreeModel {
 public:
     DecisionTreeModel(): class_id(-1) {
         node_mp = std::shared_ptr<std::unordered_map<int, TreeNode> >(new std::unordered_map<int, TreeNode>());
+        leaf_mp_ptr = std::shared_ptr<std::unordered_map<size_t , size_t> >(new std::unordered_map<size_t , size_t>());
     }
     std::pair<int/*class_id*/, float/*score*/> getClassScore(const std::vector<float> &features);
     void setClassId(int _class_id) {class_id = _class_id; };
     void insertNode(const TreeNode &node) { (*node_mp)[node.node_id] = node; }
+    void addLeaf(int node_id) {
+        if (leaf_mp_ptr->find(node_id) == leaf_mp_ptr->end()) {
+            (*leaf_mp_ptr)[node_id] = leaf_mp_ptr->size();
+        }
+    }
 private:
     std::shared_ptr<std::unordered_map<int, TreeNode> > node_mp;
     int class_id;
+    std::shared_ptr<std::unordered_map<size_t , size_t> > leaf_mp_ptr;
 };
 
 

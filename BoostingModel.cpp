@@ -68,6 +68,7 @@ void BoostingModel::loadModel(const std::string &model_path) {
             int node_id = atoi(fields[2]);
             float score = atof(fields[3]);
             node_ptr = std::make_shared<TreeNode>(TreeNode(node_id, score));
+            dt->addLeaf(node_id);
         }
         dt->insertNode(*node_ptr);
     }
