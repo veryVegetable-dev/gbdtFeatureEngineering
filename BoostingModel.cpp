@@ -6,7 +6,7 @@
 
 
 
-DecisionTreeModel::PredictionInfo DecisionTreeModel::getClassScore(const std::vector<float> &features) {
+DecisionTreeModel::PredictionInfo DecisionTreeModel::predict(const std::vector<float> &features) const {
     DecisionTreeModel::PredictionInfo predictionInfo;
     if (node_mp->empty()) return predictionInfo;
     int feature_dim = features.size();
@@ -25,13 +25,19 @@ DecisionTreeModel::PredictionInfo DecisionTreeModel::getClassScore(const std::ve
 }
 
 
-void BoostingModel::predict(const std::vector<float>& features, std::vector<float> *class_scores) {
+void BoostingModel::predict(const std::vector<float>& features, std::vector<float> *class_scores, std::vector<int>* transformed_features) {
     if (_num_class < class_scores->size()) return;
     for (auto &score: *class_scores) score = 0;
-    for (auto &tree : *_trees_ptr) {
-        const DecisionTreeModel::PredictionInfo &predict_info = tree.getClassScore(features);
+    size_t num_trees = _trees_ptr->size();
+    for (size_t i = 0; i < num_trees; i++) {
+        const DecisionTreeModel &tree = (*_trees_ptr)[i];
+        std::vector<int> one_tree_feature(tree.numLeaf(), 0);
+        const DecisionTreeModel::PredictionInfo &predict_info = tree.predict(features);
         if (predict_info.class_id < 0) continue;
         (*class_scores)[predict_info.class_id] += predict_info.score;
+        one_tree_feature[predict_info.leaf_id] = 1;
+        for (const auto &e: one_tree_feature)
+            transformed_features->emplace_back(e);
     }
 }
 

@@ -40,7 +40,6 @@ public:
         node_mp = std::shared_ptr<std::unordered_map<int, TreeNode> >(new std::unordered_map<int, TreeNode>());
         leaf_mp_ptr = std::shared_ptr<std::unordered_map<size_t , size_t> >(new std::unordered_map<size_t , size_t>());
     }
-    DecisionTreeModel::PredictionInfo getClassScore(const std::vector<float> &features);
     void setClassId(int _class_id) {class_id = _class_id; };
     void insertNode(const TreeNode &node) { (*node_mp)[node.node_id] = node; }
     void addLeaf(int node_id) {
@@ -48,6 +47,8 @@ public:
             (*leaf_mp_ptr)[node_id] = leaf_mp_ptr->size();
         }
     }
+    DecisionTreeModel::PredictionInfo predict(const std::vector<float> &features) const ;
+    size_t numLeaf() const {return leaf_mp_ptr->size(); }
 private:
     std::shared_ptr<std::unordered_map<int, TreeNode> > node_mp;
     int class_id;
@@ -68,7 +69,7 @@ public:
         loadModel(model_path);
         return *this;
     }
-    void predict(const std::vector<float>& features, std::vector<float>* class_scores);
+    void predict(const std::vector<float>& features, std::vector<float>* class_scores, std::vector<int>* transformed_features);
 private:
     static void parseLine(const char* line, std::vector<char*>& fields);
     void loadModel(const std::string& model_path);

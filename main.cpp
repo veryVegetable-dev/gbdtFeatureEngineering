@@ -63,7 +63,8 @@ int main() {
         Eval::Sample sample;
         if (!Eval::parseSample(buffer, labels_mp, &sample)) continue;
         std::vector<float> pred = std::vector<float>(NUM_CLASS);
-        bm.predict(sample.features, &pred);
+        std::vector<int> transformed_features = std::vector<int>();
+        bm.predict(sample.features, &pred, &transformed_features);
         if (sample.label != Eval::findMax(pred)) error_cnt++;
         cnt++;
     }
