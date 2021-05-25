@@ -3,6 +3,7 @@
 #include <vector>
 #include <fstream>
 #include <unordered_map>
+#include <cstdlib>
 
 
 namespace Eval {
@@ -42,6 +43,7 @@ int main() {
     const int NUM_CLASS = 7;
     const std::string& model_path = "/Users/menglingwu/Documents/2021/coding/personal_projects/boosting_spark/xgboost.trees.parsed";
     const std::string& data_path = "/Users/menglingwu/Documents/2021/coding/personal_projects/dataset/DryBeanDataset/Dry_Bean_Dataset.txt";
+    const std::string& transformed_feature_path = "/Users/menglingwu/Documents/2021/coding/personal_projects/dataset/DryBeanDataset/transformed_feature.txt";
 
     // 加载模型
     BoostingModel bm = BoostingModel::Get()->Init(model_path, NUM_CLASS);
@@ -56,6 +58,7 @@ int main() {
 
     // 加载测试数据
     std::ifstream eval_file(data_path);
+    std::ofstream transformed_feature_file(transformed_feature_path);
     const int MAX_LEN = 1000;
     char buffer[MAX_LEN];
     int error_cnt = 0, cnt = 0;
@@ -63,10 +66,21 @@ int main() {
         Eval::Sample sample;
         if (!Eval::parseSample(buffer, labels_mp, &sample)) continue;
         std::vector<float> pred = std::vector<float>(NUM_CLASS);
-        bm.predict(sample.features, &pred);
+        std::vector<int> transformed_features = std::vector<int>();
+        bm.predict(sample.features, &pred, &transformed_features);
         if (sample.label != Eval::findMax(pred)) error_cnt++;
         cnt++;
+        size_t num_feature = transformed_features.size();
+        char feature_buffer[num_feature+1];
+        for (size_t i = 0; i < num_feature; i++) {
+            if (transformed_features[i] == 1) feature_buffer[i] = '1';
+            else feature_buffer[i] = '0';
+        }
+        feature_buffer[num_feature] = '\n';
+        transformed_feature_file.write(feature_buffer, num_feature+1);
     }
     std::cout << error_cnt << "," << cnt << "," << (float)error_cnt / (float)cnt << std::endl;
+    eval_file.close();
+    transformed_feature_file.close();
     return 0;
 }

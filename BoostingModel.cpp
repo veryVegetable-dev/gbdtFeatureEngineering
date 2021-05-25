@@ -6,28 +6,38 @@
 
 
 
-std::pair<int/*class_id*/, float/*score*/> DecisionTreeModel::getClassScore(const std::vector<float> &features) {
-    if (node_mp->empty()) return std::make_pair<int, float>(-1, 0);
+DecisionTreeModel::PredictionInfo DecisionTreeModel::predict(const std::vector<float> &features) const {
+    DecisionTreeModel::PredictionInfo predictionInfo;
+    if (node_mp->empty()) return predictionInfo;
     int feature_dim = features.size();
     TreeNode node = (*node_mp)[0];
     while (node.left_node_id >= 0 && node.right_node_id >= 0) {
-        if (node.split_feature_id >= feature_dim) return std::make_pair<int, float>(-1, 0);
+        if (node.split_feature_id >= feature_dim) return predictionInfo;
         if (features[node.split_feature_id] < node.threshold)
             node = (*node_mp)[node.left_node_id];
         else
             node = (*node_mp)[node.right_node_id];
     }
-    return std::make_pair<int, float>(reinterpret_cast<int &&>(class_id), reinterpret_cast<float &&>(node.score));
+    predictionInfo.class_id = class_id;
+    predictionInfo.score = node.score;
+    predictionInfo.leaf_id = (*leaf_mp_ptr)[node.node_id];
+    return predictionInfo;
 }
 
 
-void BoostingModel::predict(const std::vector<float>& features, std::vector<float> *class_scores) {
+void BoostingModel::predict(const std::vector<float>& features, std::vector<float> *class_scores, std::vector<int>* transformed_features) {
     if (_num_class < class_scores->size()) return;
     for (auto &score: *class_scores) score = 0;
-    for (auto &tree : *_trees_ptr) {
-        std::pair<int, float> pred = tree.getClassScore(features);
-        if (pred.first < 0) continue;
-        (*class_scores)[pred.first] += pred.second;
+    size_t num_trees = _trees_ptr->size();
+    for (size_t i = 0; i < num_trees; i++) {
+        const DecisionTreeModel &tree = (*_trees_ptr)[i];
+        std::vector<int> one_tree_feature(tree.numLeaf(), 0);
+        const DecisionTreeModel::PredictionInfo &predict_info = tree.predict(features);
+        if (predict_info.class_id < 0) continue;
+        (*class_scores)[predict_info.class_id] += predict_info.score;
+        one_tree_feature[predict_info.leaf_id] = 1;
+        for (const auto &e: one_tree_feature)
+            transformed_features->emplace_back(e);
     }
 }
 
@@ -68,6 +78,7 @@ void BoostingModel::loadModel(const std::string &model_path) {
             int node_id = atoi(fields[2]);
             float score = atof(fields[3]);
             node_ptr = std::make_shared<TreeNode>(TreeNode(node_id, score));
+            dt->addLeaf(node_id);
         }
         dt->insertNode(*node_ptr);
     }
