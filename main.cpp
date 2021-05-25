@@ -71,21 +71,14 @@ int main() {
         if (sample.label != Eval::findMax(pred)) error_cnt++;
         cnt++;
         // dump sample
-        const std::string &origin_label = labels_array[sample.label];
-        size_t label_len = origin_label.size();
         size_t num_feature = transformed_features.size();
-        size_t buffer_len = label_len + 1 + num_feature * 2;
+        size_t buffer_len = num_feature * 2 + 2;
         char feature_buffer[buffer_len];
         for (size_t i = 0; i < num_feature; i++) {
-            if (transformed_features[i] == 1) {
-                feature_buffer[2*i] = '1';
-            }
-            else
-                feature_buffer[2*i] = '0';
+            feature_buffer[2*i] = (char)((int)'0' + transformed_features[i]);
             feature_buffer[2*i+1] = '|';
         }
-        for (size_t i = 0; i < label_len; i++)
-            feature_buffer[num_feature * 2 + i] = origin_label[i];
+        feature_buffer[num_feature * 2] = (char)((int)'0' + sample.label);
         feature_buffer[buffer_len-1] = '\n';
         transformed_feature_file.write(feature_buffer, buffer_len);
     }
