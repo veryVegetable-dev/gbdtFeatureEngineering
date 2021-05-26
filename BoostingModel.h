@@ -63,11 +63,12 @@ public:
         return &bm;
     }
     BoostingModel(): _num_class(0), _trees_ptr(nullptr) {}
-    BoostingModel& Init(const std::string& model_path, int num_class) {
+    BoostingModel(BoostingModel const&) = delete;
+    void operator=(BoostingModel const&) = delete;
+    void Init(const std::string& model_path, int num_class) {
         _num_class = num_class;
         _trees_ptr = std::shared_ptr<std::vector<DecisionTreeModel> >(new std::vector<DecisionTreeModel>());
         loadModel(model_path);
-        return *this;
     }
     void predict(const std::vector<float>& features, std::vector<float>* class_scores, std::vector<int>* transformed_features);
     size_t getLeafNum();
